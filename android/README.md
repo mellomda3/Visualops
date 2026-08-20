@@ -10,20 +10,24 @@ App de terreno: Kotlin + Jetpack Compose. Habla con la **misma API** que la web 
 
 ## Configurar
 
-En [AppConfig.kt](app/src/main/java/net/visualops/app/AppConfig.kt):
+1. Copiá `local.properties.example` → `local.properties` (o dejá que Android Studio cree el `sdk.dir`).
+2. Agregá las mismas keys que la web:
 
-```kotlin
-const val supabaseUrl = "https://xxxx.supabase.co"
-const val supabaseAnonKey = "eyJ..."
+```properties
+sdk.dir=C:\\Users\\TU_USER\\AppData\\Local\\Android\\Sdk
+SUPABASE_URL=https://xxxx.supabase.co
+SUPABASE_ANON_KEY=eyJ...
 ```
 
-Los mismos valores que `VITE_SUPABASE_*` de la web.
+Gradle las inyecta en `BuildConfig` (no van hardcodeadas en el código fuente).
 
 ## Abrir y generar APK
 
 1. Android Studio → Open → carpeta `android/`
 2. Sync Gradle
-3. Run en un teléfono o `Build → Build APK`
+3. Run en un teléfono o **Build → Build Bundle(s) / APK(s) → Build APK(s)**
+
+Login demo: `admin@visualops.local` / `demo1234`
 
 ## Offline
 
@@ -31,4 +35,4 @@ Si no hay red al guardar una precarga, el alta entra en `sync_queue` (Room) y Wo
 
 ## Archivos
 
-Óptico → “Adjuntar receta” usa el selector nativo (cámara/galería) y sube a Storage. En la BD solo queda `path` + `kind`.
+Óptico → “Adjuntar” usa galería/cámara y sube a Storage. En la BD queda `path` + `kind`.

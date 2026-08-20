@@ -15,7 +15,35 @@ import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 object SessionStore {
-    @Volatile var accessToken: String? = null
+    private const val PREFS = "visualops_session"
+    private const val KEY_TOKEN = "access_token"
+
+    @Volatile
+    var accessToken: String? = null
+        private set
+
+    fun init(context: Context) {
+        if (accessToken == null) {
+            accessToken = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getString(KEY_TOKEN, null)
+        }
+    }
+
+    fun save(context: Context, token: String) {
+        accessToken = token
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putString(KEY_TOKEN, token)
+            .apply()
+    }
+
+    fun clear(context: Context) {
+        accessToken = null
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .remove(KEY_TOKEN)
+            .apply()
+    }
 }
 
 class SyncWorker(appContext: Context, params: WorkerParameters) : CoroutineWorker(appContext, params) {
