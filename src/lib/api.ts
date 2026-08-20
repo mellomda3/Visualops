@@ -2,6 +2,7 @@ import { demoApi, demoAuth } from './localDb'
 import { isDemoMode, supabase } from './supabase'
 import type {
   Campaign,
+  FileKind,
   Order,
   OrderInput,
   PatientRecord,
@@ -264,6 +265,7 @@ export const dataApi = {
   async addFile(
     recordId: string,
     file: File,
+    kind: FileKind = 'otro',
   ): Promise<RecordFile> {
     if (isDemoMode) {
       const dataUrl = await readFileAsDataUrl(file)
@@ -278,7 +280,14 @@ export const dataApi = {
 
     const { data, error } = await client
       .from('files')
-      .insert({ record_id: recordId, path, name: file.name })
+      .insert({
+        record_id: recordId,
+        path,
+        name: file.name,
+        mime_type: file.type || 'application/octet-stream',
+        size_bytes: file.size,
+        kind,
+      })
       .select('*')
       .single()
     if (error) throw error

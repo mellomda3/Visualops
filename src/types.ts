@@ -17,6 +17,7 @@ export interface Profile {
 
 export interface Campaign {
   id: string
+  organization_id?: string
   name: string
   location: string
   date: string
@@ -54,11 +55,16 @@ export interface Order {
   updated_at: string
 }
 
+export type FileKind = 'receta' | 'historia' | 'dni' | 'armazon' | 'otro'
+
 export interface RecordFile {
   id: string
   record_id: string
   path: string
   name: string
+  mime_type?: string
+  size_bytes?: number
+  kind?: FileKind
   created_at: string
 }
 

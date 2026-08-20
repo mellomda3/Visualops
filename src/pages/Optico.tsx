@@ -7,7 +7,7 @@ import {
   exportRecordPdf,
 } from '../lib/exports'
 import { OPTICO_STATUSES, STATUS_LABELS } from '../lib/status'
-import type { OrderInput, PatientRecord, RecordStatus } from '../types'
+import type { FileKind, OrderInput, PatientRecord, RecordStatus } from '../types'
 import { StatusBadge } from '../components/StatusBadge'
 import {
   Alert,
@@ -40,6 +40,7 @@ export function OpticoPage() {
   )
   const [query, setQuery] = useState('')
   const [form, setForm] = useState(emptyOrder)
+  const [fileKind, setFileKind] = useState<FileKind>('receta')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -165,7 +166,7 @@ export function OpticoPage() {
     if (!selected || !file) return
     setBusy(true)
     try {
-      await dataApi.addFile(selected.id, file)
+      await dataApi.addFile(selected.id, file, fileKind)
       setMessage(`Archivo "${file.name}" adjunto`)
       await refreshSelected(selected.id, selected.ficha_nro)
     } catch (err) {
@@ -393,8 +394,19 @@ export function OpticoPage() {
             </div>
 
             <div>
-              <Label>Adjuntar archivo</Label>
+              <Label>Adjuntar archivo (receta, historia, DNI)</Label>
+              <Select
+                value={fileKind}
+                onChange={(e) => setFileKind(e.target.value as FileKind)}
+              >
+                <option value="receta">Receta</option>
+                <option value="historia">Historia clínica</option>
+                <option value="dni">DNI</option>
+                <option value="armazon">Armazón</option>
+                <option value="otro">Otro</option>
+              </Select>
               <Field
+                className="mt-2"
                 type="file"
                 onChange={(e) => void onUpload(e.target.files?.[0] ?? null)}
               />

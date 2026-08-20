@@ -28,3 +28,12 @@ dist-ssr
 
 # Local Netlify folder
 .netlify
+
+# Supabase CLI cache
+supabase/.temp
+
+# Android
+android/.gradle
+android/build
+android/app/build
+android/local.properties
