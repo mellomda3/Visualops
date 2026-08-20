@@ -1,0 +1,190 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #0b1220;
+  --ink-soft: #1c2a3f;
+  --mist: #e8eef5;
+  --paper: #f7f9fc;
+  --line: #c9d5e4;
+  --signal: #00c2a8;
+  --signal-deep: #009e89;
+  --flare: #ff8a3d;
+  --ok: #1f9d6c;
+  --warn: #c98500;
+  --danger: #d64545;
+  --shadow: 0 18px 40px rgba(11, 18, 32, 0.08);
+  --radius: 18px;
+  --font-display: "Syne", "Avenir Next", sans-serif;
+  --font-body: "Figtree", "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-body);
+  background:
+    radial-gradient(circle at 12% -10%, rgba(0, 194, 168, 0.18), transparent 36%),
+    radial-gradient(circle at 90% 0%, rgba(255, 138, 61, 0.12), transparent 28%),
+    linear-gradient(180deg, #f4f7fb 0%, var(--mist) 100%);
+  background-attachment: fixed;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.03em;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes soft-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 194, 168, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(0, 194, 168, 0);
+  }
+}
+
+.page-enter {
+  animation: rise-in 0.35s ease-out both;
+}
+
+.surface-card {
+  border: 1px solid color-mix(in srgb, var(--line) 80%, white);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, white 92%, var(--paper));
+  box-shadow: var(--shadow);
+}
+
+.field {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+  padding: 0.7rem 0.85rem;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field:focus {
+  border-color: var(--signal);
+  box-shadow: 0 0 0 3px rgba(0, 194, 168, 0.18);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  padding: 0.7rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--signal) 0%, var(--signal-deep) 100%);
+  color: #04211c;
+}
+
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.btn-ink {
+  background: var(--ink);
+  color: white;
+}
+
+.btn-ink:hover:not(:disabled) {
+  background: var(--ink-soft);
+}
+
+.btn-ghost {
+  background: white;
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--signal) 45%, var(--line));
+  background: #f3fbf9;
+}
+
+.btn-danger {
+  background: #fff1f1;
+  border-color: #f3c1c1;
+  color: var(--danger);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.mesh-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.mesh-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 22px 22px;
+  pointer-events: none;
+  mask-image: linear-gradient(180deg, black, transparent 85%);
+}
+
+.stat-glow {
+  animation: soft-pulse 2.8s ease-in-out infinite;
+}
