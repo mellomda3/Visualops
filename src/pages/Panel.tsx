@@ -50,6 +50,13 @@ export function PanelPage() {
     location: '',
     date: new Date().toISOString().slice(0, 10),
   })
+  const [newUser, setNewUser] = useState({
+    email: '',
+    password: '',
+    full_name: '',
+    role: 'recepcion' as UserRole,
+  })
+  const [userBusy, setUserBusy] = useState(false)
 
   const load = async () => {
     const [rows, camps, st] = await Promise.all([
@@ -158,6 +165,35 @@ export function PanelPage() {
       await load()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo crear')
+    }
+  }
+
+  const onCreateUser = async () => {
+    setUserBusy(true)
+    setError('')
+    setMessage('')
+    try {
+      if (!newUser.email.trim() || !newUser.password) {
+        throw new Error('Email y contraseña son obligatorios')
+      }
+      const created = await dataApi.createUser({
+        email: newUser.email.trim(),
+        password: newUser.password,
+        full_name: newUser.full_name.trim(),
+        role: newUser.role,
+      })
+      setNewUser({
+        email: '',
+        password: '',
+        full_name: '',
+        role: 'recepcion',
+      })
+      setProfiles(await dataApi.listProfiles())
+      setMessage(`Usuario ${created.email} creado · ${ROLE_LABELS[created.role]}`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo crear el usuario')
+    } finally {
+      setUserBusy(false)
     }
   }
 
@@ -390,12 +426,64 @@ export function PanelPage() {
           </Card>
 
           <Card className="p-5">
-            <h2 className="font-display text-lg font-bold">Roles de usuarios</h2>
-            <div className="mt-3 space-y-2">
+            <h2 className="font-display text-lg font-bold">Usuarios y roles</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Alta de cuentas para el operativo. El perfil se crea con el rol elegido.
+            </p>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <Field
+                placeholder="Nombre completo"
+                value={newUser.full_name}
+                onChange={(e) =>
+                  setNewUser((p) => ({ ...p, full_name: e.target.value }))
+                }
+              />
+              <Field
+                type="email"
+                placeholder="Email"
+                value={newUser.email}
+                onChange={(e) =>
+                  setNewUser((p) => ({ ...p, email: e.target.value }))
+                }
+              />
+              <Field
+                type="password"
+                placeholder="Contraseña temporal"
+                value={newUser.password}
+                onChange={(e) =>
+                  setNewUser((p) => ({ ...p, password: e.target.value }))
+                }
+              />
+              <Select
+                value={newUser.role}
+                onChange={(e) =>
+                  setNewUser((p) => ({
+                    ...p,
+                    role: e.target.value as UserRole,
+                  }))
+                }
+              >
+                {(Object.keys(ROLE_LABELS) as UserRole[]).map((role) => (
+                  <option key={role} value={role}>
+                    {ROLE_LABELS[role]}
+                  </option>
+                ))}
+              </Select>
+              <Button
+                type="button"
+                variant="ink"
+                className="md:col-span-2"
+                disabled={userBusy}
+                onClick={() => void onCreateUser()}
+              >
+                {userBusy ? 'Creando…' : 'Crear usuario'}
+              </Button>
+            </div>
+            <div className="mt-5 space-y-2">
               {profiles.map((p) => (
                 <div
                   key={p.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--line)] px-3 py-2"
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--line)] bg-white/80 px-3 py-2"
                 >
                   <div>
                     <p className="text-sm font-semibold">{p.full_name}</p>

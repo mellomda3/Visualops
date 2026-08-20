@@ -19,14 +19,15 @@ export function PageHeader({
             {eyebrow}
           </p>
         )}
-        <h1 className="font-display text-3xl font-bold text-[var(--ink)] md:text-4xl">
+        <h1 className="font-display text-3xl font-extrabold text-[var(--ink)] md:text-4xl">
           {title}
         </h1>
         {description && (
-          <p className="mt-2 max-w-2xl text-sm text-slate-600 md:text-base">
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600 md:text-base">
             {description}
           </p>
         )}
+        <div className="mt-3 h-1 w-16 rounded-full bg-[linear-gradient(90deg,var(--signal),var(--flare))]" />
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </div>

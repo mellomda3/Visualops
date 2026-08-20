@@ -595,6 +595,31 @@ export const demoApi = {
     save(db)
   },
 
+  async createUser(input: {
+    email: string
+    password: string
+    full_name: string
+    role: UserRole
+  }): Promise<Profile> {
+    if (input.password.length < 6) {
+      throw new Error('La contraseña debe tener al menos 6 caracteres')
+    }
+    const db = load()
+    const email = input.email.trim().toLowerCase()
+    if (db.profiles.some((p) => p.email.toLowerCase() === email)) {
+      throw new Error('Ese email ya existe')
+    }
+    const profile: Profile = {
+      id: uid(),
+      email,
+      full_name: input.full_name.trim() || email.split('@')[0],
+      role: input.role,
+    }
+    db.profiles.push(profile)
+    save(db)
+    return profile
+  },
+
   async getStats(): Promise<Record<RecordStatus | 'total', number>> {
     const rows = load().records
     const base: Record<RecordStatus | 'total', number> = {

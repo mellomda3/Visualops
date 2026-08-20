@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #0b1220;
-  --ink-soft: #1c2a3f;
-  --mist: #e8eef5;
-  --paper: #f7f9fc;
-  --line: #c9d5e4;
+  --ink: #07101c;
+  --ink-soft: #15253a;
+  --mist: #e6eef7;
+  --paper: #f5f8fc;
+  --line: #c5d3e4;
   --signal: #00c2a8;
   --signal-deep: #009e89;
   --flare: #ff8a3d;
   --ok: #1f9d6c;
   --warn: #c98500;
   --danger: #d64545;
-  --shadow: 0 18px 40px rgba(11, 18, 32, 0.08);
-  --radius: 18px;
+  --shadow: 0 20px 44px rgba(7, 16, 28, 0.09);
+  --radius: 20px;
   --font-display: "Syne", "Avenir Next", sans-serif;
   --font-body: "Figtree", "Segoe UI", sans-serif;
 }
@@ -33,9 +33,9 @@ body {
   color: var(--ink);
   font-family: var(--font-body);
   background:
-    radial-gradient(circle at 12% -10%, rgba(0, 194, 168, 0.18), transparent 36%),
-    radial-gradient(circle at 90% 0%, rgba(255, 138, 61, 0.12), transparent 28%),
-    linear-gradient(180deg, #f4f7fb 0%, var(--mist) 100%);
+    radial-gradient(circle at 8% -8%, rgba(0, 194, 168, 0.2), transparent 34%),
+    radial-gradient(circle at 92% 4%, rgba(255, 138, 61, 0.14), transparent 26%),
+    linear-gradient(180deg, #f2f6fb 0%, var(--mist) 100%);
   background-attachment: fixed;
 }
 
@@ -57,7 +57,7 @@ h3,
 @keyframes rise-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -71,27 +71,57 @@ h3,
     box-shadow: 0 0 0 0 rgba(0, 194, 168, 0.35);
   }
   50% {
-    box-shadow: 0 0 0 10px rgba(0, 194, 168, 0);
+    box-shadow: 0 0 0 12px rgba(0, 194, 168, 0);
+  }
+}
+
+@keyframes drift-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(4%, 3%, 0) scale(1.06);
+  }
+}
+
+@keyframes drift-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-5%, 4%, 0) scale(1.08);
+  }
+}
+
+@keyframes mark-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
   }
 }
 
 .page-enter {
-  animation: rise-in 0.35s ease-out both;
+  animation: rise-in 0.4s ease-out both;
 }
 
 .surface-card {
-  border: 1px solid color-mix(in srgb, var(--line) 80%, white);
+  border: 1px solid color-mix(in srgb, var(--line) 75%, white);
   border-radius: var(--radius);
-  background: color-mix(in srgb, white 92%, var(--paper));
+  background: color-mix(in srgb, white 94%, var(--paper));
   box-shadow: var(--shadow);
 }
 
 .field {
   width: 100%;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 14px;
   background: white;
-  padding: 0.7rem 0.85rem;
+  padding: 0.72rem 0.9rem;
   color: var(--ink);
   outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -107,12 +137,13 @@ h3,
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
-  border-radius: 12px;
+  border-radius: 14px;
   border: 1px solid transparent;
-  padding: 0.7rem 1rem;
+  padding: 0.72rem 1.05rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
+  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease,
+    filter 0.15s ease;
 }
 
 .btn:active {
@@ -163,9 +194,10 @@ h3,
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  padding: 0.2rem 0.65rem;
-  font-size: 0.75rem;
+  padding: 0.22rem 0.7rem;
+  font-size: 0.72rem;
   font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .mesh-panel {
@@ -178,8 +210,8 @@ h3,
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
   background-size: 22px 22px;
   pointer-events: none;
   mask-image: linear-gradient(180deg, black, transparent 85%);
@@ -187,4 +219,68 @@ h3,
 
 .stat-glow {
   animation: soft-pulse 2.8s ease-in-out infinite;
+}
+
+.login-stage {
+  background: linear-gradient(145deg, #07101c 0%, #13233a 48%, #0a1624 100%);
+}
+
+.login-glow {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(40px);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.login-glow-a {
+  top: -12%;
+  left: -8%;
+  width: 52vw;
+  height: 52vw;
+  max-width: 560px;
+  max-height: 560px;
+  background: radial-gradient(circle, rgba(0, 194, 168, 0.45), transparent 68%);
+  animation: drift-a 14s ease-in-out infinite;
+}
+
+.login-glow-b {
+  right: -10%;
+  bottom: -18%;
+  width: 48vw;
+  height: 48vw;
+  max-width: 520px;
+  max-height: 520px;
+  background: radial-gradient(circle, rgba(255, 138, 61, 0.32), transparent 70%);
+  animation: drift-b 18s ease-in-out infinite;
+}
+
+.login-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.22;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(circle at 30% 40%, black, transparent 75%);
+  pointer-events: none;
+}
+
+.brand-mark {
+  animation: mark-breathe 4.5s ease-in-out infinite;
+}
+
+.app-canvas {
+  position: relative;
+}
+
+.app-canvas::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(0, 194, 168, 0.07), transparent 28%),
+    radial-gradient(circle at 0% 100%, rgba(255, 138, 61, 0.05), transparent 24%);
 }

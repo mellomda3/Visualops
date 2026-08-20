@@ -363,6 +363,38 @@ export const dataApi = {
     if (error) throw error
   },
 
+  async createUser(input: {
+    email: string
+    password: string
+    full_name: string
+    role: UserRole
+  }): Promise<Profile> {
+    if (isDemoMode) return demoApi.createUser(input)
+
+    const client = requireSupabase()
+    const { data: sessionData, error: sessionError } = await client.auth.getSession()
+    if (sessionError) throw sessionError
+    const token = sessionData.session?.access_token
+    if (!token) throw new Error('Sesión no disponible')
+
+    const res = await fetch('/api/create-user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(input),
+    })
+    const body = (await res.json()) as Profile & { error?: string }
+    if (!res.ok) throw new Error(body.error || 'No se pudo crear el usuario')
+    return {
+      id: body.id,
+      email: body.email,
+      full_name: body.full_name,
+      role: body.role,
+    }
+  },
+
   async getStats(): Promise<Record<RecordStatus | 'total', number>> {
     if (isDemoMode) return demoApi.getStats()
     const rows = await dataApi.listRecords()
