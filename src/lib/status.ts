@@ -25,12 +25,26 @@ export const OPTICO_STATUSES: RecordStatus[] = [
 ]
 
 export function canTransition(from: RecordStatus, to: RecordStatus): boolean {
+  if (from === to) return true
   if (to === 'cancelada') return from !== 'entregada' && from !== 'cancelada'
   if (from === 'cancelada' || from === 'entregada') return false
   const fromIdx = STATUS_FLOW.indexOf(from)
   const toIdx = STATUS_FLOW.indexOf(to)
   if (fromIdx === -1 || toIdx === -1) return false
-  return toIdx === fromIdx || toIdx === fromIdx + 1
+  return toIdx === fromIdx + 1
+}
+
+/** Estados alcanzables desde el actual (incluye quedarse en el mismo). */
+export function allowedStatuses(from: RecordStatus): RecordStatus[] {
+  const candidates: RecordStatus[] = [...STATUS_FLOW, 'cancelada']
+  return candidates.filter((to) => canTransition(from, to))
+}
+
+export function assertTransition(from: RecordStatus, to: RecordStatus): void {
+  if (canTransition(from, to)) return
+  throw new Error(
+    `No se puede pasar de ${STATUS_LABELS[from]} a ${STATUS_LABELS[to]}`,
+  )
 }
 
 export function homePathForRole(role: UserRole): string {

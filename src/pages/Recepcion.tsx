@@ -60,6 +60,10 @@ export function RecepcionPage() {
     void load().catch((err) =>
       setError(err instanceof Error ? err.message : 'Error al cargar'),
     )
+    const id = window.setInterval(() => {
+      void load().catch(() => undefined)
+    }, 20000)
+    return () => window.clearInterval(id)
   }, [])
 
   const onCreateCampaign = async (e: FormEvent) => {
@@ -93,8 +97,8 @@ export function RecepcionPage() {
       if (!form.campaign_id) throw new Error('Seleccioná una campaña')
       if (!form.full_name.trim()) throw new Error('El nombre es obligatorio')
       const appointment_at = form.time
-        ? new Date(`${form.date}T${form.time}`).toISOString()
-        : `${form.date}T12:00:00.000Z`
+        ? new Date(`${form.date}T${form.time}:00`).toISOString()
+        : new Date(`${form.date}T12:00:00`).toISOString()
 
       const record = await dataApi.createRecord(
         {

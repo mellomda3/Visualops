@@ -11,7 +11,7 @@ import {
   exportRecordsPdf,
   exportStickersPdf,
 } from '../lib/exports'
-import { ROLE_LABELS, STATUS_LABELS } from '../lib/status'
+import { ROLE_LABELS, STATUS_LABELS, allowedStatuses } from '../lib/status'
 import type {
   Campaign,
   PatientRecord,
@@ -33,7 +33,7 @@ import {
 } from '../components/ui'
 
 export function PanelPage() {
-  const { profile } = useAuth()
+  const { profile, refresh } = useAuth()
   const [records, setRecords] = useState<PatientRecord[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [profiles, setProfiles] = useState<Profile[]>([])
@@ -78,26 +78,28 @@ export function PanelPage() {
     return [...set].sort().reverse()
   }, [records])
 
-  const grouped = useMemo(() => {
+  const filteredRecords = useMemo(() => {
     const q = query.trim().toLowerCase()
-    const filtered = !q
-      ? records
-      : records.filter(
-          (r) =>
-            r.full_name.toLowerCase().includes(q) ||
-            r.ficha_nro.toLowerCase().includes(q) ||
-            r.phone.includes(q),
-        )
+    if (!q) return records
+    return records.filter(
+      (r) =>
+        r.full_name.toLowerCase().includes(q) ||
+        r.ficha_nro.toLowerCase().includes(q) ||
+        r.phone.includes(q) ||
+        (r.campaigns?.name ?? '').toLowerCase().includes(q),
+    )
+  }, [records, query])
 
+  const grouped = useMemo(() => {
     const map = new Map<string, PatientRecord[]>()
-    for (const r of filtered) {
+    for (const r of filteredRecords) {
       const key = `${r.campaigns?.name ?? 'Sin campaña'}|${(r.appointment_at ?? r.created_at).slice(0, 10)}`
       const list = map.get(key) ?? []
       list.push(r)
       map.set(key, list)
     }
     return [...map.entries()]
-  }, [records, query])
+  }, [filteredRecords])
 
   const onDelete = async (id: string) => {
     if (!confirm('¿Eliminar esta ficha?')) return
@@ -121,6 +123,7 @@ export function PanelPage() {
         insurance: editing.insurance,
         recipe_nro: editing.recipe_nro,
         age: editing.age,
+        appointment_at: editing.appointment_at,
         status: editing.status,
       })
       setEditing(null)
@@ -135,6 +138,7 @@ export function PanelPage() {
     try {
       await dataApi.updateProfileRole(userId, role)
       setProfiles(await dataApi.listProfiles())
+      if (profile?.id === userId) await refresh()
       setMessage('Rol actualizado')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo cambiar el rol')
@@ -226,13 +230,13 @@ export function PanelPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <Button type="button" variant="ghost" onClick={() => exportRecordsPdf(records)}>
+        <Button type="button" variant="ghost" onClick={() => exportRecordsPdf(filteredRecords)}>
           PDF
         </Button>
-        <Button type="button" variant="ghost" onClick={() => exportRecordsExcel(records)}>
+        <Button type="button" variant="ghost" onClick={() => exportRecordsExcel(filteredRecords)}>
           Excel
         </Button>
-        <Button type="button" variant="ghost" onClick={() => exportStickersPdf(records)}>
+        <Button type="button" variant="ghost" onClick={() => exportStickersPdf(filteredRecords)}>
           Stickers
         </Button>
       </Card>
@@ -274,12 +278,32 @@ export function PanelPage() {
                       </p>
                     )}
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <a className="btn btn-ghost !px-2 !py-1 text-xs" href={buildWhatsAppUrl(r)} target="_blank" rel="noreferrer">
-                        WhatsApp
-                      </a>
-                      <a className="btn btn-ghost !px-2 !py-1 text-xs" href={buildSmsUrl(r)}>
-                        SMS
-                      </a>
+                      {(() => {
+                        const wa = buildWhatsAppUrl(r)
+                        const sms = buildSmsUrl(r)
+                        return (
+                          <>
+                            {wa ? (
+                              <a className="btn btn-ghost !px-2 !py-1 text-xs" href={wa} target="_blank" rel="noreferrer">
+                                WhatsApp
+                              </a>
+                            ) : (
+                              <span className="btn btn-ghost !px-2 !py-1 text-xs opacity-40" title="Sin teléfono">
+                                WhatsApp
+                              </span>
+                            )}
+                            {sms ? (
+                              <a className="btn btn-ghost !px-2 !py-1 text-xs" href={sms}>
+                                SMS
+                              </a>
+                            ) : (
+                              <span className="btn btn-ghost !px-2 !py-1 text-xs opacity-40" title="Sin teléfono">
+                                SMS
+                              </span>
+                            )}
+                          </>
+                        )
+                      })()}
                       <button
                         type="button"
                         className="btn btn-ghost !px-2 !py-1 text-xs"
@@ -399,12 +423,12 @@ export function PanelPage() {
 
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(11,18,32,0.55)] p-4 backdrop-blur-sm">
-          <Card className="w-full max-w-lg p-5">
+          <Card className="max-h-[90vh] w-full max-w-lg overflow-auto p-5">
             <h3 className="font-display text-lg font-bold">
               Editar ficha {editing.ficha_nro}
             </h3>
-            <div className="mt-4 grid gap-3">
-              <div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="md:col-span-2">
                 <Label>Nombre</Label>
                 <Field
                   value={editing.full_name}
@@ -419,6 +443,20 @@ export function PanelPage() {
                   value={editing.phone}
                   onChange={(e) =>
                     setEditing({ ...editing, phone: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <Label>Edad</Label>
+                <Field
+                  type="number"
+                  min={0}
+                  value={editing.age ?? ''}
+                  onChange={(e) =>
+                    setEditing({
+                      ...editing,
+                      age: e.target.value ? Number(e.target.value) : null,
+                    })
                   }
                 />
               </div>
@@ -450,6 +488,31 @@ export function PanelPage() {
                 />
               </div>
               <div>
+                <Label>N° receta</Label>
+                <Field
+                  value={editing.recipe_nro}
+                  onChange={(e) =>
+                    setEditing({ ...editing, recipe_nro: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <Label>Turno (fecha)</Label>
+                <Field
+                  type="date"
+                  value={(editing.appointment_at ?? '').slice(0, 10)}
+                  onChange={(e) => {
+                    const day = e.target.value
+                    setEditing({
+                      ...editing,
+                      appointment_at: day
+                        ? new Date(`${day}T12:00:00`).toISOString()
+                        : null,
+                    })
+                  }}
+                />
+              </div>
+              <div className="md:col-span-2">
                 <Label>Estado</Label>
                 <Select
                   value={editing.status}
@@ -460,9 +523,9 @@ export function PanelPage() {
                     })
                   }
                 >
-                  {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                  {allowedStatuses(editing.status).map((value) => (
                     <option key={value} value={value}>
-                      {label}
+                      {STATUS_LABELS[value]}
                     </option>
                   ))}
                 </Select>

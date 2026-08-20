@@ -1,5 +1,6 @@
 import { demoApi, demoAuth } from './localDb'
 import { isDemoMode, supabase } from './supabase'
+import { assertTransition } from './status'
 import type {
   Campaign,
   FileKind,
@@ -157,7 +158,9 @@ export const dataApi = {
       rows = rows.filter(
         (r) =>
           r.full_name.toLowerCase().includes(q) ||
-          r.ficha_nro.toLowerCase().includes(q),
+          r.ficha_nro.toLowerCase().includes(q) ||
+          r.phone.toLowerCase().includes(q) ||
+          (r.campaigns?.name ?? '').toLowerCase().includes(q),
       )
     }
     return rows
@@ -194,7 +197,17 @@ export const dataApi = {
     patch: Partial<PatientRecordInput> & { status?: RecordStatus },
   ): Promise<PatientRecord> {
     if (isDemoMode) return demoApi.updateRecord(recordId, patch)
-    const { data, error } = await requireSupabase()
+    const client = requireSupabase()
+    if (patch.status) {
+      const { data: current, error: currentError } = await client
+        .from('records')
+        .select('status')
+        .eq('id', recordId)
+        .single()
+      if (currentError) throw currentError
+      assertTransition(current.status as RecordStatus, patch.status)
+    }
+    const { data, error } = await client
       .from('records')
       .update(patch)
       .eq('id', recordId)
@@ -202,6 +215,13 @@ export const dataApi = {
       .single()
     if (error) throw error
     return mapRecord(data as PatientRecord)
+  },
+
+  async updateRecordStatus(
+    recordId: string,
+    status: RecordStatus,
+  ): Promise<PatientRecord> {
+    return dataApi.updateRecord(recordId, { status })
   },
 
   async deleteRecord(recordId: string): Promise<void> {
@@ -238,6 +258,20 @@ export const dataApi = {
   async saveOrder(recordId: string, input: OrderInput): Promise<Order> {
     if (isDemoMode) return demoApi.saveOrder(recordId, input)
     const client = requireSupabase()
+    const { data: current, error: currentError } = await client
+      .from('records')
+      .select('status')
+      .eq('id', recordId)
+      .single()
+    if (currentError) throw currentError
+
+    const nextStatus =
+      input.status ??
+      ((current.status as RecordStatus) === 'graduada'
+        ? 'pendiente'
+        : (current.status as RecordStatus))
+    assertTransition(current.status as RecordStatus, nextStatus)
+
     const payload = {
       record_id: recordId,
       lens: input.lens,
@@ -256,7 +290,6 @@ export const dataApi = {
       .single()
     if (error) throw error
 
-    const nextStatus = input.status ?? 'pendiente'
     await client.from('records').update({ status: nextStatus }).eq('id', recordId)
 
     return data as Order
@@ -269,7 +302,7 @@ export const dataApi = {
   ): Promise<RecordFile> {
     if (isDemoMode) {
       const dataUrl = await readFileAsDataUrl(file)
-      return demoApi.addFile(recordId, file.name, dataUrl)
+      return demoApi.addFile(recordId, file.name, dataUrl, kind)
     }
     const client = requireSupabase()
     const path = `${recordId}/${Date.now()}-${file.name}`

@@ -1,5 +1,6 @@
 import type {
   Campaign,
+  FileKind,
   Order,
   OrderInput,
   PatientRecord,
@@ -11,6 +12,7 @@ import type {
   RefractionInput,
   UserRole,
 } from '../types'
+import { assertTransition } from './status'
 
 const STORAGE_KEY = 'visualops.demo.v2'
 
@@ -457,6 +459,7 @@ export const demoApi = {
     const db = load()
     const record = db.records.find((r) => r.id === recordId)
     if (!record) throw new Error('Ficha no encontrada')
+    if (patch.status) assertTransition(record.status, patch.status)
     Object.assign(record, {
       ...patch,
       updated_at: nowIso(),
@@ -540,6 +543,7 @@ export const demoApi = {
       const nextStatus =
         input.status ??
         (record.status === 'graduada' ? 'pendiente' : record.status)
+      assertTransition(record.status, nextStatus)
       record.status = nextStatus
       record.updated_at = nowIso()
     }
@@ -551,6 +555,7 @@ export const demoApi = {
     recordId: string,
     name: string,
     dataUrl: string,
+    kind: FileKind = 'otro',
   ): Promise<RecordFile> {
     const db = load()
     const file: RecordFile = {
@@ -558,6 +563,9 @@ export const demoApi = {
       record_id: recordId,
       path: dataUrl,
       name,
+      mime_type: 'application/octet-stream',
+      size_bytes: 0,
+      kind,
       created_at: nowIso(),
     }
     db.files.push(file)

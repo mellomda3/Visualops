@@ -24,8 +24,13 @@ export function normalizeArPhone(raw: string): string {
   return `54${digits}`
 }
 
-export function buildWhatsAppUrl(record: PatientRecord): string {
-  const withCountry = normalizeArPhone(record.phone || '0000000000')
+export function hasUsablePhone(raw: string | null | undefined): boolean {
+  return (raw ?? '').replace(/\D/g, '').length >= 8
+}
+
+export function buildWhatsAppUrl(record: PatientRecord): string | null {
+  if (!hasUsablePhone(record.phone)) return null
+  const withCountry = normalizeArPhone(record.phone)
   const order = record.orders
   const text = [
     `Hola ${record.full_name},`,
@@ -44,7 +49,8 @@ export function buildWhatsAppUrl(record: PatientRecord): string {
   return `https://wa.me/${withCountry}?text=${encodeURIComponent(text)}`
 }
 
-export function buildSmsUrl(record: PatientRecord): string {
+export function buildSmsUrl(record: PatientRecord): string | null {
+  if (!hasUsablePhone(record.phone)) return null
   const phone = record.phone.replace(/\D/g, '')
   const order = record.orders
   const body = [
@@ -127,6 +133,14 @@ export function exportRecordsExcel(records: PatientRecord[]): void {
     Localidad: r.city,
     'Obra social': r.insurance,
     Receta: r.recipe_nro,
+    'OD ESF': r.refractions?.od_sph ?? '',
+    'OD CIL': r.refractions?.od_cyl ?? '',
+    'OD EJE': r.refractions?.od_axis ?? '',
+    'OI ESF': r.refractions?.os_sph ?? '',
+    'OI CIL': r.refractions?.os_cyl ?? '',
+    'OI EJE': r.refractions?.os_axis ?? '',
+    ADD: r.refractions?.add_power ?? '',
+    DNP: r.refractions?.dnp ?? '',
     Total: r.orders?.total ?? 0,
     Seña: r.orders?.deposit ?? 0,
     Saldo: r.orders?.balance ?? 0,

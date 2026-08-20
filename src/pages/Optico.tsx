@@ -6,7 +6,7 @@ import {
   buildWhatsAppUrl,
   exportRecordPdf,
 } from '../lib/exports'
-import { OPTICO_STATUSES, STATUS_LABELS } from '../lib/status'
+import { OPTICO_STATUSES, STATUS_LABELS, allowedStatuses } from '../lib/status'
 import type { FileKind, OrderInput, PatientRecord, RecordStatus } from '../types'
 import { StatusBadge } from '../components/StatusBadge'
 import {
@@ -139,20 +139,9 @@ export function OpticoPage() {
     if (!selected) return
     setForm((p) => ({ ...p, status }))
     setBusy(true)
+    setError('')
     try {
-      const total = Number(form.total || selected.orders?.total || 0)
-      const deposit = Number(form.deposit || selected.orders?.deposit || 0)
-      await dataApi.saveOrder(selected.id, {
-        lens: form.lens || selected.orders?.lens || null,
-        frame: form.frame || selected.orders?.frame || null,
-        treatment: form.treatment || selected.orders?.treatment || null,
-        color: form.color || selected.orders?.color || null,
-        shape: form.shape || selected.orders?.shape || null,
-        distance: form.distance || selected.orders?.distance || null,
-        total,
-        deposit,
-        status,
-      })
+      await dataApi.updateRecordStatus(selected.id, status)
       setMessage(`Estado → ${STATUS_LABELS[status]}`)
       await refreshSelected(selected.id, selected.ficha_nro)
     } catch (err) {
@@ -191,6 +180,9 @@ export function OpticoPage() {
   }
 
   const balance = Number(form.total || 0) - Number(form.deposit || 0)
+  const nextStatuses = selected ? allowedStatuses(selected.status) : []
+  const waUrl = selected ? buildWhatsAppUrl(selected) : null
+  const smsUrl = selected ? buildSmsUrl(selected) : null
 
   return (
     <div className="mx-auto grid max-w-6xl gap-6 page-enter lg:grid-cols-[340px_1fr]">
@@ -274,13 +266,26 @@ export function OpticoPage() {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <a className="btn btn-ghost text-sm" href={buildWhatsAppUrl(selected)} target="_blank" rel="noreferrer">
-                  WhatsApp
-                </a>
-                <a className="btn btn-ghost text-sm" href={buildSmsUrl(selected)}>
-                  <MessageSquare className="h-4 w-4" />
-                  SMS
-                </a>
+                {waUrl ? (
+                  <a className="btn btn-ghost text-sm" href={waUrl} target="_blank" rel="noreferrer">
+                    WhatsApp
+                  </a>
+                ) : (
+                  <span className="btn btn-ghost text-sm opacity-40" title="Sin teléfono">
+                    WhatsApp
+                  </span>
+                )}
+                {smsUrl ? (
+                  <a className="btn btn-ghost text-sm" href={smsUrl}>
+                    <MessageSquare className="h-4 w-4" />
+                    SMS
+                  </a>
+                ) : (
+                  <span className="btn btn-ghost text-sm opacity-40" title="Sin teléfono">
+                    <MessageSquare className="h-4 w-4" />
+                    SMS
+                  </span>
+                )}
                 <button
                   type="button"
                   className="btn btn-ghost text-sm"
@@ -309,16 +314,36 @@ export function OpticoPage() {
             )}
 
             <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="ghost" disabled={busy} onClick={() => void quickStatus('pendiente')}>
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={busy || !nextStatuses.includes('pendiente')}
+                onClick={() => void quickStatus('pendiente')}
+              >
                 Pendiente
               </Button>
-              <Button type="button" variant="ghost" disabled={busy} onClick={() => void quickStatus('confirmada')}>
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={busy || !nextStatuses.includes('confirmada')}
+                onClick={() => void quickStatus('confirmada')}
+              >
                 Confirmar
               </Button>
-              <Button type="button" variant="primary" disabled={busy} onClick={() => void quickStatus('entregada')}>
+              <Button
+                type="button"
+                variant="primary"
+                disabled={busy || !nextStatuses.includes('entregada')}
+                onClick={() => void quickStatus('entregada')}
+              >
                 Entregar
               </Button>
-              <Button type="button" variant="danger" disabled={busy} onClick={() => void quickStatus('cancelada')}>
+              <Button
+                type="button"
+                variant="danger"
+                disabled={busy || !nextStatuses.includes('cancelada')}
+                onClick={() => void quickStatus('cancelada')}
+              >
                 Cancelar
               </Button>
             </div>
@@ -377,12 +402,11 @@ export function OpticoPage() {
                     }))
                   }
                 >
-                  {OPTICO_STATUSES.map((s) => (
+                  {nextStatuses.map((s) => (
                     <option key={s} value={s}>
                       {STATUS_LABELS[s]}
                     </option>
                   ))}
-                  <option value="cancelada">Cancelada</option>
                 </Select>
               </div>
               <div className="flex items-end">

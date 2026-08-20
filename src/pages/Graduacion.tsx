@@ -43,7 +43,13 @@ export function GraduacionPage() {
   const selected = queue.find((r) => r.id === selectedId) ?? null
 
   const load = async () => {
-    const rows = await dataApi.listRecords({ status: 'precargada' })
+    const [precargadas, graduadas] = await Promise.all([
+      dataApi.listRecords({ status: 'precargada' }),
+      dataApi.listRecords({ status: 'graduada' }),
+    ])
+    const rows = [...precargadas, ...graduadas].sort((a, b) =>
+      a.created_at.localeCompare(b.created_at),
+    )
     setQueue(rows)
     if (selectedId && !rows.some((r) => r.id === selectedId)) {
       setSelectedId(null)
@@ -56,6 +62,10 @@ export function GraduacionPage() {
     void load().catch((err) =>
       setError(err instanceof Error ? err.message : 'Error al cargar'),
     )
+    const id = window.setInterval(() => {
+      void load().catch(() => undefined)
+    }, 20000)
+    return () => window.clearInterval(id)
   }, [])
 
   const selectRecord = (record: PatientRecord) => {
@@ -99,6 +109,20 @@ export function GraduacionPage() {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!selected) return
+    const hasValue = [
+      form.od_sph,
+      form.od_cyl,
+      form.od_axis,
+      form.os_sph,
+      form.os_cyl,
+      form.os_axis,
+      form.add_power,
+      form.dnp,
+    ].some((v) => v != null)
+    if (!hasValue) {
+      setError('Cargá al menos un valor de refracción (ESF, CIL, EJE, ADD o DNP)')
+      return
+    }
     setBusy(true)
     setError('')
     setMessage('')
@@ -134,7 +158,7 @@ export function GraduacionPage() {
         <PageHeader
           eyebrow="Puesto 02"
           title="Graduación"
-          description="Cola de precargadas listas para receta."
+          description="Cola de precargadas y re-edición de graduadas."
         />
         <div className="space-y-2">
           {queue.map((r) => (
@@ -219,7 +243,7 @@ export function GraduacionPage() {
             </div>
 
             <Button type="submit" disabled={busy}>
-              {busy ? 'Guardando…' : 'Guardar receta y pasar a graduada'}
+              {busy ? 'Guardando…' : selected.status === 'graduada' ? 'Actualizar receta' : 'Guardar receta y pasar a graduada'}
             </Button>
           </form>
         )}
