@@ -2,16 +2,16 @@
 
 App de terreno: Kotlin + Jetpack Compose. Habla con la **misma API** que la web (Supabase hoy; Postgres+S3 mañana).
 
-## Requisitos
+## Requisitos (ya instalados en esta máquina)
 
-- Android Studio Ladybug+
-- JDK 17
-- Proyecto Supabase con migraciones `001` y `002`
+- JDK 17 (`C:\Program Files\Microsoft\jdk-17.0.20.101-hotspot`)
+- Android SDK (`%LOCALAPPDATA%\Android\Sdk`) — platform 35, build-tools, platform-tools
+- Android Studio (opcional, para UI/emulador gráfico)
+- Gradle Wrapper en `android/`
 
 ## Configurar
 
-1. Copiá `local.properties.example` → `local.properties` (o dejá que Android Studio cree el `sdk.dir`).
-2. Agregá las mismas keys que la web:
+`android/local.properties` (no se commitea):
 
 ```properties
 sdk.dir=C:\\Users\\TU_USER\\AppData\\Local\\Android\\Sdk
@@ -19,20 +19,35 @@ SUPABASE_URL=https://xxxx.supabase.co
 SUPABASE_ANON_KEY=eyJ...
 ```
 
-Gradle las inyecta en `BuildConfig` (no van hardcodeadas en el código fuente).
+## Generar APK (debug)
 
-## Abrir y generar APK
+```powershell
+cd android
+.\gradlew.bat assembleDebug
+```
 
-1. Android Studio → Open → carpeta `android/`
-2. Sync Gradle
-3. Run en un teléfono o **Build → Build Bundle(s) / APK(s) → Build APK(s)**
+APK:
+`android\app\build\outputs\apk\debug\app-debug.apk`
 
-Login demo: `admin@visualops.local` / `demo1234`
+## Probar
+
+**Emulador / dispositivo**
+
+```powershell
+# con emulador o USB + depuración
+adb install -r app\build\outputs\apk\debug\app-debug.apk
+adb shell am start -n net.visualops.app/.MainActivity
+```
+
+**Android Studio:** Open → carpeta `android/` → Run.
+
+## Login
+
+Mismos usuarios que la web, p. ej.:
+
+- `admin@visualops.local` / `demo1234`
+- `recepcion@visualops.local` / `demo1234`
 
 ## Offline
 
 Si no hay red al guardar una precarga, el alta entra en `sync_queue` (Room) y WorkManager la sube al volver internet.
-
-## Archivos
-
-Óptico → “Adjuntar” usa galería/cámara y sube a Storage. En la BD queda `path` + `kind`.
